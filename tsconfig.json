@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2018", "WebWorker", "ScriptHost", "DOM"],
+    "module": "commonjs",
+    "target": "es2018",
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true
+  }
+}
