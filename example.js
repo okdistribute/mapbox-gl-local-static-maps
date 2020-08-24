@@ -44,6 +44,7 @@ const input = ({ id, type = "text" }) => {
 };
 
 function updateMap() {
+  console.log("update map", values);
   map.jumpTo({
     center: [values.longitude, values.latitude],
     zoom: values.zoom,

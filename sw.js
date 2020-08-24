@@ -4,6 +4,7 @@
 
 const MSG_REQ_MAP = "request-map";
 const MSG_MAP_READY = "map-ready";
+const MSG_REGISTER = "register-map-renderer";
 const CACHE_NAME = "map-images";
 const DEFAULT_STYLE = "mapbox://styles/mapbox/light-v9";
 const basePathRe = /^\/static-maps/;
@@ -19,6 +20,8 @@ function init(self) {
   let id = 0;
   /** @type {Map<number, () => void>} */
   const pendingRequests = new Map();
+  /** @type {Set<string>} Set of registered client ids */
+  const registeredClients = new Set();
 
   self.addEventListener("install", function (event) {
     // The promise that skipWaiting() returns can be safely ignored.
@@ -38,14 +41,36 @@ function init(self) {
     if (resolve) resolve();
   });
 
+  // Any clients that can process map requests register with this message
+  self.addEventListener("message", async (event) => {
+    // Only handle messages of type `MSG_REGISTER`
+    if (!event.data || event.data.type !== MSG_REGISTER) return;
+    // Only register clients of type "window"
+    if (!(event.source instanceof Client) || event.source.type !== "window")
+      return;
+    console.log("Registering client", event.source.id);
+    registeredClients.add(event.source.id);
+
+    // Clean up registered clients which are no longer available
+    const clients = await self.clients.matchAll({ type: "window" });
+    for (const clientId of registeredClients) {
+      if (!clients.find((client) => client.id === clientId)) {
+        registeredClients.delete(clientId);
+      }
+    }
+    console.log("Num clients regsitered:", registeredClients.size);
+  });
+
   self.addEventListener("fetch", (event) => {
     const url = new URL(event.request.url);
     if (location.origin !== url.origin || !basePathRe.test(url.pathname))
       return;
+    console.log("fetch", event.request.url);
     const path = url.pathname.replace(basePathRe, "");
     try {
       var mapOptions = parseMapOptions(path, url.searchParams);
     } catch (e) {
+      console.log("failed to parse mapOptions");
       return event.respondWith(
         new Response(null, { status: 400, statusText: e.message })
       );
@@ -53,6 +78,18 @@ function init(self) {
     const cacheKey = path + "?" + url.searchParams.toString();
     event.respondWith(mapResponse({ mapOptions, cacheKey }));
   });
+
+  /**
+   * Return an active client that is able to process the map request, or void if
+   * no clients are available
+   * @returns {Promise<Client | void>}
+   */
+  async function getRegisteredClient() {
+    const clients = await self.clients.matchAll({ type: "window" });
+    // Get the first connected client that has registered
+    const client = clients.find((client) => registeredClients.has(client.id));
+    return client;
+  }
 
   const responseInitOk = {
     status: 200,
@@ -73,23 +110,14 @@ function init(self) {
       return new Response(cachedResponse.body, responseInitOk);
     }
 
-    // Send a request to the first attached client for the map to be rendered
-    const clients = await self.clients.matchAll({ type: "window" });
-    // Get the first client whose url pathname does not start with `static-maps`
-    // TODO: WARNING: This is not a reliable way to do this. There could not be
-    // an active client that can create the map, and there could be another
-    // page from the same domain that is in the clients list, but cannot process
-    // this message from the service worker.
-    const client = clients.find((client) => {
-      const url = new URL(client.url);
-      return !basePathRe.test(url.pathname);
-    });
+    const client = await getRegisteredClient();
     if (!client) {
       return new Response(null, {
         status: 500,
         statusText: "No client available",
       });
     }
+    console.log(client);
     const requestId = id++;
     /** @type {MsgReqMap} */
     const message = {
@@ -102,6 +130,7 @@ function init(self) {
 
     return new Promise((resolve) => {
       pendingRequests.set(requestId, async () => {
+        console.log("checking for cache", cacheKey);
         const cachedResponse = await cache.match(cacheKey);
 
         if (cachedResponse) {
