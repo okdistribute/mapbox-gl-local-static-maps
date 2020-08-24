@@ -1,8 +1,10 @@
 # mapbox-gl-local-static-maps
 
-[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+![stability experimental](https://img.shields.io/badge/stability-experimental-red?style=flat-square)[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
 A local static images API for mapbox-gl-js
+
+**⚠️ THIS IS A PROOF OF CONCEPT AND MAY NOT RECEIVE ANY MORE LOVE ⚠️**
 
 This is a replica of the Mapbox [Static Images
 API](https://docs.mapbox.com/api/maps/#static-images) running in a
