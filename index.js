@@ -14,6 +14,9 @@ const originalPixelRatio = window.devicePixelRatio;
  */
 module.exports = async function startMapService(scriptURL) {
   if (!("serviceWorker" in navigator)) return;
+  const { serviceWorker } = navigator;
+  await serviceWorker.register(scriptURL);
+
   /** @type {HTMLElement} */
   const mapDiv = createMapDiv();
   const map = new mapboxgl.Map({
@@ -22,8 +25,6 @@ module.exports = async function startMapService(scriptURL) {
   });
   const cache = await caches.open(CACHE_NAME);
 
-  const { serviceWorker } = navigator;
-  await serviceWorker.register(scriptURL);
   serviceWorker.addEventListener("message", async ({ data: message }) => {
     if (!message || message.type !== MSG_REQ_MAP) return;
     const {
