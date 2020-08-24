@@ -15,11 +15,10 @@ const pathRegExp = /^(?:\/(-?\d+(?:\.\d+)?))(?:,(-?\d+(?:\.\d+)?))(?:,(\d+(?:\.\
 init(self);
 
 /** @param {ServiceWorkerGlobalScope} self */
-async function init(self) {
+function init(self) {
   let id = 0;
   /** @type {Map<number, () => void>} */
   const pendingRequests = new Map();
-  const cache = await self.caches.open(CACHE_NAME);
 
   self.addEventListener("install", function (event) {
     // The promise that skipWaiting() returns can be safely ignored.
@@ -67,6 +66,7 @@ async function init(self) {
    * @returns {Promise<Response>}
    */
   async function mapResponse({ mapOptions, cacheKey }) {
+    const cache = await self.caches.open(CACHE_NAME);
     const cachedResponse = await cache.match(cacheKey);
 
     if (cachedResponse) {
