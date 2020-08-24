@@ -74,7 +74,22 @@ function init(self) {
     }
 
     // Send a request to the first attached client for the map to be rendered
-    const client = (await self.clients.matchAll({ type: "window" }))[0];
+    const clients = await self.clients.matchAll({ type: "window" });
+    // Get the first client whose url pathname does not start with `static-maps`
+    // TODO: WARNING: This is not a reliable way to do this. There could not be
+    // an active client that can create the map, and there could be another
+    // page from the same domain that is in the clients list, but cannot process
+    // this message from the service worker.
+    const client = clients.find((client) => {
+      const url = new URL(client.url);
+      return !basePathRe.test(url.pathname);
+    });
+    if (!client) {
+      return new Response(null, {
+        status: 500,
+        statusText: "No client available",
+      });
+    }
     const requestId = id++;
     /** @type {MsgReqMap} */
     const message = {
