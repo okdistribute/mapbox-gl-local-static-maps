@@ -55,6 +55,7 @@ module.exports = async function startMapService(scriptURL) {
     style,
     center,
     zoom,
+    pixelRatio,
   }) {
     return new Promise((resolve) => {
       if (accessToken) mapboxgl.accessToken = accessToken;
