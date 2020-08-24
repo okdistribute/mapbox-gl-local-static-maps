@@ -1,6 +1,6 @@
 {
   "name": "mapbox-gl-local-static-maps",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A local mapbox-gl static maps API running in a service worker",
   "main": "index.js",
   "scripts": {
